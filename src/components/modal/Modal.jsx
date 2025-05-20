@@ -1,71 +1,114 @@
-import { useRef, useEffect, useState } from 'react';
-import './Modal.css';
+import React, { useRef, useEffect } from 'react';
+import './Modal.css'; // Optional: your custom styles
 
-const Modal = () => {
-  const [isOpen, setIsOpen] = useState(false); // Controls modal visibility
-  const modalRef = useRef(null);               // Ref for modal content
+function Modal() {
+  // References to the modal and overlay DOM elements
+  const modalRef = useRef(null);
+  const overlayRef = useRef(null);
 
-  // Toggle the modal's open/close state
-  const toggleModal = () => setIsOpen(prev => !prev);
+  // Open the modal by directly modifying the DOM node
+  const openModal = () => {
+    if (modalRef.current && overlayRef.current) {
+      modalRef.current.style.display = 'block';
+      overlayRef.current.style.display = 'block';
+    }
+  };
+
+  // Close the modal by directly modifying the DOM node
+  const closeModal = () => {
+    if (modalRef.current && overlayRef.current) {
+      modalRef.current.style.display = 'none';
+      overlayRef.current.style.display = 'none';
+    }
+  };
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    // Handle clicks outside the modal content
     const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setIsOpen(false);
+      // Close if clicking outside modal (on overlay)
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target) &&
+        overlayRef.current &&
+        overlayRef.current.contains(event.target)
+      ) {
+        closeModal();
       }
     };
 
-    // Handle Escape key to close modal
-    const handleKeyDown = (event) => {
+    const handleEscape = (event) => {
+      // Close if Escape key is pressed
       if (event.key === 'Escape') {
-        setIsOpen(false);
+        closeModal();
       }
     };
 
+    // Add both event listeners
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleEscape);
 
-    // Cleanup listeners when modal closes or component unmounts
+    // Cleanup
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen]);
+  }, []);
 
   return (
-    <div className="modal-container">
-      {/* Button to open the modal */}
-      <button onClick={toggleModal} className="modal-open-btn" aria-haspopup="dialog">
-        Open Modal
-      </button>
+    <div>
+      {/* Trigger button */}
+      <button onClick={openModal}>Open Modal</button>
 
-      {/* Modal overlay and dialog */}
-      {isOpen && (
-        <div className="modal-overlay" role="presentation">
-          {/* Modal content */}
-          <div
-            className="modal-content"
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
+      {/* Overlay */}
+      <div
+        ref={overlayRef}
+        style={{
+          display: 'none',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100vh',
+          width: '100vw',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 999,
+        }}
+      >
+        {/* Modal */}
+        <div
+          ref={modalRef}
+          style={{
+            display: 'none',
+            margin: '10% auto',
+            padding: '20px',
+            background: 'white',
+            width: '300px',
+            borderRadius: '10px',
+            position: 'relative',
+            zIndex: 1000,
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={closeModal}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '18px',
+              cursor: 'pointer',
+            }}
+            aria-label="Close Modal"
           >
-            <h2 id="modal-title">Modal Title</h2>
-            <p id="modal-description">Click outside this box or press Escape to close</p>
+            &times;
+          </button>
 
-            {/* Close button */}
-            <button onClick={toggleModal} className="modal-close-btn">
-              Close
-            </button>
-          </div>
+          {/* Modal content */}
+          <p>This is the modal content</p>
         </div>
-      )}
+      </div>
     </div>
   );
-};
+}
 
 export default Modal;
