@@ -1,49 +1,63 @@
 import { useRef, useEffect, useState } from 'react';
-import './Modal.css'; // Import the CSS
+import './Modal.css';
 
 const Modal = () => {
-  // State to control modal visibility
-  const [isOpen, setIsOpen] = useState(false);
-  
-  // Ref to access modal DOM node
-  const modalRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false); // Controls modal visibility
+  const modalRef = useRef(null);               // Ref for modal content
 
-  // Toggle modal open/close
-  const toggleModal = () => setIsOpen(!isOpen);
+  // Toggle the modal's open/close state
+  const toggleModal = () => setIsOpen(prev => !prev);
 
-  // Effect for outside click detection
   useEffect(() => {
-    const handleOutsideClick = (event) => {
-      // Check if click is outside the modal content
+    if (!isOpen) return;
+
+    // Handle clicks outside the modal content
+    const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
 
-    // Only add listener when modal is open
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    }
-
-    // Cleanup function to remove listener
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
+    // Handle Escape key to close modal
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
     };
-  }, [isOpen]); // Re-run effect when isOpen changes
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup listeners when modal closes or component unmounts
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
     <div className="modal-container">
-      {/* Button to open modal */}
-      <button onClick={toggleModal} className="modal-open-btn">
+      {/* Button to open the modal */}
+      <button onClick={toggleModal} className="modal-open-btn" aria-haspopup="dialog">
         Open Modal
       </button>
 
-      {/* Modal overlay and content */}
+      {/* Modal overlay and dialog */}
       {isOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" ref={modalRef}>
-            <h2>Modal Title</h2>
-            <p>Click outside this box or the button below to close</p>
+        <div className="modal-overlay" role="presentation">
+          {/* Modal content */}
+          <div
+            className="modal-content"
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
+          >
+            <h2 id="modal-title">Modal Title</h2>
+            <p id="modal-description">Click outside this box or press Escape to close</p>
+
+            {/* Close button */}
             <button onClick={toggleModal} className="modal-close-btn">
               Close
             </button>
